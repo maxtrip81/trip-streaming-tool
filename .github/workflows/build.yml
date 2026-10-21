@@ -1,0 +1,63 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y libportaudio2 ffmpeg libegl1 libxkbcommon0
+      - run: pip install -r requirements.txt pytest
+      - run: QT_QPA_PLATFORM=offscreen pytest -q
+
+  package:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller pillow
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2
+      - run: pyinstaller --noconfirm trip.spec
+      - name: Windows installer
+        if: runner.os == 'Windows'
+        run: iscc installer\windows\trip.iss
+        shell: cmd
+      - name: macOS disk image and package
+        if: runner.os == 'macOS'
+        run: installer/macos/build_dmg.sh && installer/macos/build_pkg.sh
+      - name: Linux tarball
+        if: runner.os == 'Linux'
+        run: installer/linux/build_tarball.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trip-streaming-tool-${{ runner.os }}
+          path: |
+            installer/windows/Output/*.exe
+            dist/*.dmg
+            dist/*.pkg
+            dist/*.tar.gz
+      - if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            installer/windows/Output/*.exe
+            dist/*.dmg
+            dist/*.pkg
+            dist/*.tar.gz

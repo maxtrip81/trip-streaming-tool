@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=TRIP streaming tool
+GenericName=Live audio streaming
+GenericName[it]=Streaming audio dal vivo
+Comment=Broadcast live audio to Icecast, SHOUTcast and WebRTC/WHIP
+Comment[it]=Trasmetti audio dal vivo verso Icecast, SHOUTcast e WebRTC/WHIP
+Exec=@EXEC@
+Icon=trip-streaming-tool
+Terminal=false
+Categories=AudioVideo;Audio;Network;
+Keywords=icecast;shoutcast;streaming;radio;broadcast;webrtc;
