@@ -4,6 +4,8 @@
 set -e
 cd "$(dirname "$0")/../.."
 VERSION=$(python3 -c "import trip_stream; print(trip_stream.__version__)")
+# the build is native for the machine it runs on: arm64 -> Apple Silicon, x86_64 -> Intel
+if [ "$(uname -m)" = "arm64" ]; then ARCH=apple-silicon; HOST_ARCHS=arm64; else ARCH=intel; HOST_ARCHS="x86_64,arm64"; fi
 APP="dist/TRIP streaming tool.app"
 [ -d "$APP" ] || pyinstaller --noconfirm trip.spec
 WORK=$(mktemp -d)
@@ -25,7 +27,7 @@ cat > "$WORK/distribution.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="2">
   <title>TRIP streaming tool $VERSION</title>
-  <options customize="always" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+  <options customize="always" require-scripts="false" hostArchitectures="$HOST_ARCHS"/>
   <choices-outline>
     <line choice="app"/>
     <line choice="lang_it"/>
@@ -48,6 +50,6 @@ cat > "$WORK/distribution.xml" <<XML
 </installer-gui-script>
 XML
 productbuild --distribution "$WORK/distribution.xml" --package-path "$WORK" \
-    "dist/TRIP-streaming-tool-$VERSION-macos.pkg"
+    "dist/TRIP-streaming-tool-$VERSION-macos-$ARCH.pkg"
 rm -rf "$WORK"
-echo "dist/TRIP-streaming-tool-$VERSION-macos.pkg"
+echo "dist/TRIP-streaming-tool-$VERSION-macos-$ARCH.pkg"

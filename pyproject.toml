@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trip-streaming-tool"
-version = "1.0.1"
+version = "1.0.2"
 description = "TRIP streaming tool - free, lightweight live audio streaming to Icecast, SHOUTcast and WebRTC/WHIP"
 readme = "README.md"
 license = { text = "MIT" }

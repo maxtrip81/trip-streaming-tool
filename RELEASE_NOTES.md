@@ -10,6 +10,12 @@ MP3, AAC+, Ogg/Vorbis, Ogg/Opus, Ogg/FLAC; recording (also WAV); primary and sec
 equalizer and compressor; song metadata; signal/silence detection; command-line control.
 Italian and English interface, language chosen at install time and changeable later.
 
+### Novità 1.0.2 / What's new in 1.0.2
+- 🇮🇹 **Versione nativa per Mac Apple Silicon (M1/M2/M3/M4)**: scarica i file `macos-apple-silicon`. Per i Mac con
+  processore Intel usa i file `macos-intel`. Il codice del programma è lo stesso della 1.0.1.
+- 🇬🇧 **Native build for Apple Silicon Macs (M1/M2/M3/M4)**: download the `macos-apple-silicon` files. Intel Macs use
+  the `macos-intel` files. The program code is the same as 1.0.1.
+
 ### Novità 1.0.1 / What's new in 1.0.1
 - 🇮🇹 **Registrazione corretta e più sicura:** il file WAV resta valido e riproducibile anche se il programma viene chiuso
   bruscamente; se FFmpeg non riesce a scrivere il file la registrazione si ferma subito con l'errore sul display
@@ -27,7 +33,9 @@ Italian and English interface, language chosen at install time and changeable la
 
 ### Download
 - **Windows**: `TRIP-streaming-tool-*-windows-setup.exe`
-- **macOS**: `TRIP-streaming-tool-*-macos.pkg` (lingua nel programma di installazione / language in the installer) or `.dmg`
+- **macOS Apple Silicon (M1/M2/M3/M4)**: `TRIP-streaming-tool-*-macos-apple-silicon.pkg` or `.dmg`
+- **macOS Intel**: `TRIP-streaming-tool-*-macos-intel.pkg` or `.dmg`
+- macOS `.pkg`: lingua nel programma di installazione / language in the installer; `.dmg`: lingua al primo avvio / language on first launch
 - **Linux**: `TRIP-streaming-tool-*-linux-x86_64.tar.gz` → `./install.sh`
 
 macOS: le build non sono firmate, al primo avvio clic destro → Apri. / Builds are unsigned: right-click → Open on first launch.
