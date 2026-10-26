@@ -26,6 +26,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       GH_TOKEN: ${{ github.token }}
+      TRIP_MACOS_MIN: "12.3"  # oldest macOS supported by the Apple Silicon build (scipy needs 12.3)
     steps:
       - uses: actions/checkout@v5
         with:
@@ -43,14 +44,14 @@ jobs:
         with:
           python-version: "3.12"
       - if: steps.done.outputs.skip != 'true'
-        run: pip install -r requirements.txt pyinstaller pillow
+        run: tools/macos_deps.sh "$TRIP_MACOS_MIN"
       - if: steps.done.outputs.skip != 'true'
         run: pyinstaller --noconfirm trip.spec
       - name: Check native arm64 build
         if: steps.done.outputs.skip != 'true'
         run: |
           file "dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool" | tee /dev/stderr | grep -q arm64
-          echo "::notice title=${{ matrix.os }} $(uname -m) minimum macOS::$(tools/macos_minos.sh "dist/TRIP streaming tool.app")"
+          python tools/check_macos_minos.py "dist/TRIP streaming tool.app" "$TRIP_MACOS_MIN"
       - name: Recording smoke test (built program)
         if: steps.done.outputs.skip != 'true'
         run: python tools/smoke_frozen.py "dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool"

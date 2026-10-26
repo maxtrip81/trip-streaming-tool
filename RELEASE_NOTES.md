@@ -10,6 +10,14 @@ MP3, AAC+, Ogg/Vorbis, Ogg/Opus, Ogg/FLAC; recording (also WAV); primary and sec
 equalizer and compressor; song metadata; signal/silence detection; command-line control.
 Italian and English interface, language chosen at install time and changeable later.
 
+### Novità 1.0.3 / What's new in 1.0.3
+- 🇮🇹 **Mac: compatibilità corretta.** Le build per Mac della 1.0.2 contenevano librerie Qt compilate per macOS 26 e non
+  si avviavano su macOS 14/15. La 1.0.3 funziona da **macOS 12.3** (Apple Silicon) e **macOS 12** (Intel); ogni build
+  viene ora verificata automaticamente prima della pubblicazione. Windows e Linux sono invariati.
+- 🇬🇧 **Mac: compatibility fixed.** The 1.0.2 Mac builds contained Qt libraries built for macOS 26 and did not start on
+  macOS 14/15. 1.0.3 runs on **macOS 12.3** (Apple Silicon) and **macOS 12** (Intel); every build is now checked
+  automatically before it is published. Windows and Linux are unchanged.
+
 ### Novità 1.0.2 / What's new in 1.0.2
 - 🇮🇹 **Versione nativa per Mac Apple Silicon (M1/M2/M3/M4)**: scarica i file `macos-apple-silicon`. Per i Mac con
   processore Intel usa i file `macos-intel`. Il codice del programma è lo stesso della 1.0.1.
@@ -33,8 +41,8 @@ Italian and English interface, language chosen at install time and changeable la
 
 ### Download
 - **Windows**: `TRIP-streaming-tool-*-windows-setup.exe`
-- **macOS Apple Silicon (M1/M2/M3/M4)**: `TRIP-streaming-tool-*-macos-apple-silicon.pkg` or `.dmg`
-- **macOS Intel**: `TRIP-streaming-tool-*-macos-intel.pkg` or `.dmg`
+- **macOS Apple Silicon (M1/M2/M3/M4)**, macOS 12.3+: `TRIP-streaming-tool-*-macos-apple-silicon.pkg` or `.dmg`
+- **macOS Intel**, macOS 12+: `TRIP-streaming-tool-*-macos-intel.pkg` or `.dmg`
 - macOS `.pkg`: lingua nel programma di installazione / language in the installer; `.dmg`: lingua al primo avvio / language on first launch
 - **Linux**: `TRIP-streaming-tool-*-linux-x86_64.tar.gz` → `./install.sh`
 

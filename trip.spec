@@ -1,5 +1,6 @@
 # PyInstaller spec for TRIP streaming tool (Windows, macOS, Linux).
 # Build:  pyinstaller trip.spec
+import os
 import sys
 from PyInstaller.utils.hooks import collect_data_files
 
@@ -29,12 +30,14 @@ if sys.platform == "darwin":
         bundle_identifier="it.maxtrip.tripstreamingtool",
         info_plist={
             "CFBundleName": "TRIP streaming tool",
-            "CFBundleShortVersionString": "1.0.2",
+            "CFBundleShortVersionString": "1.0.3",
             "CFBundleDevelopmentRegion": "it",
             "CFBundleLocalizations": ["it", "en"],
             "NSMicrophoneUsageDescription":
                 "TRIP streaming tool needs audio input to broadcast live. / "
                 "TRIP streaming tool usa l'ingresso audio per trasmettere in diretta.",
             "NSHighResolutionCapable": True,
+            # set by CI to the macOS version the bundled libraries were chosen for (tools/macos_deps.sh)
+            "LSMinimumSystemVersion": os.environ.get("TRIP_MACOS_MIN", "12.0"),
         },
     )

@@ -39,15 +39,23 @@ jobs:
       matrix:
         os: [windows-latest, macos-15-intel, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
+    env:
+      TRIP_MACOS_MIN: "12.0"  # oldest macOS supported by the Intel build
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt pyinstaller pillow
+      - if: runner.os != 'macOS'
+        run: pip install -r requirements.txt pyinstaller pillow
+      - if: runner.os == 'macOS'
+        run: tools/macos_deps.sh "$TRIP_MACOS_MIN"
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
       - run: pyinstaller --noconfirm trip.spec
+      - name: macOS compatibility check
+        if: runner.os == 'macOS'
+        run: python tools/check_macos_minos.py "dist/TRIP streaming tool.app" "$TRIP_MACOS_MIN"
       # the built program must really stream-record to disk on every platform before it is shipped
       - name: Recording smoke test (built program)
         shell: bash
@@ -62,9 +70,7 @@ jobs:
         shell: cmd
       - name: macOS disk image and package
         if: runner.os == 'macOS'
-        run: |
-          echo "::notice title=macOS $(uname -m) minimum version::$(tools/macos_minos.sh "dist/TRIP streaming tool.app")"
-          installer/macos/build_dmg.sh && installer/macos/build_pkg.sh
+        run: installer/macos/build_dmg.sh && installer/macos/build_pkg.sh
       - name: Linux tarball
         if: runner.os == 'Linux'
         run: installer/linux/build_tarball.sh

@@ -43,7 +43,8 @@ Scarica il pacchetto per il tuo sistema dalla pagina *Releases* (prodotti dalla 
 
 - **Windows** – `TRIP-streaming-tool-…-windows-setup.exe`: il programma di installazione chiede subito la
   lingua (Italiano / English), che diventa la lingua del programma.
-- **macOS** – file `macos-apple-silicon` per i Mac M1/M2/M3/M4, `macos-intel` per i Mac Intel.
+- **macOS** – file `macos-apple-silicon` per i Mac M1/M2/M3/M4 (macOS 12.3 o successivo), `macos-intel` per i Mac
+  Intel (macOS 12 o successivo).
   `….pkg`: nella schermata *Tipo di installazione → Personalizza* scegli la lingua; oppure
   `….dmg`: trascina l'app in Applicazioni e scegli la lingua al primo avvio.
 - **Linux** – `….tar.gz`: estrai ed esegui `./install.sh` (chiede la lingua; `sudo` per installare per tutti
@@ -105,7 +106,7 @@ select that device as primary or secondary input.
 ### Install
 
 - **Windows** – `…-windows-setup.exe`: the setup asks for the language first; it becomes the program language.
-- **macOS** – `macos-apple-silicon` files for M1/M2/M3/M4 Macs, `macos-intel` for Intel Macs; `….pkg` (pick the language under *Installation Type → Customize*) or `….dmg` (language asked on first launch).
+- **macOS** – `macos-apple-silicon` files for M1/M2/M3/M4 Macs (macOS 12.3+), `macos-intel` for Intel Macs (macOS 12+); `….pkg` (pick the language under *Installation Type → Customize*) or `….dmg` (language asked on first launch).
 - **Linux** – `….tar.gz`: extract and run `./install.sh` (asks for the language; use `sudo` for a system-wide install).
 
 From source: `pip install .` then `trip-streaming-tool`. Linux needs PortAudio (`libportaudio2`).
@@ -116,6 +117,7 @@ From source: `pip install .` then `trip-streaming-tool`. Linux needs PortAudio (
 pip install -r requirements.txt pyinstaller pillow
 pyinstaller trip.spec                     # all platforms -> dist/
 iscc installer\windows\trip.iss           # Windows installer (Inno Setup 6)
+tools/macos_deps.sh 12.0                  # macOS: install libraries that run on macOS 12 (before pyinstaller)
 installer/macos/build_dmg.sh              # macOS .dmg
 installer/macos/build_pkg.sh              # macOS .pkg with language choice
 installer/linux/build_tarball.sh          # Linux .tar.gz with install.sh
