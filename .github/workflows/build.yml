@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-    paths-ignore: [".github/workflows/macos-apple-silicon.yml"]
   pull_request:
   workflow_dispatch:
 
@@ -85,6 +84,8 @@ jobs:
 
   # Publishes the release (only when every platform passed): for tags v*, and from main for the version in
   # trip_stream/__init__.py (the tag is created by the release action when it does not exist yet).
+  # Note: GitHub does not let the workflow token create the tag if main has meanwhile received a commit that
+  # changes workflow files; in that case the run on the newer commit publishes the release.
   release:
     needs: package
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
