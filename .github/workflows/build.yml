@@ -26,8 +26,10 @@ jobs:
           python-version: "3.12"
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libportaudio2 ffmpeg libegl1 libxkbcommon0
-      - run: pip install -r requirements.txt pytest
-      - run: pytest -q
+      - run: pip install -r requirements.txt pytest pytest-timeout
+      - run: pytest -q -rfE --timeout=90 --junitxml=pytest.xml
+      - if: failure()
+        run: python tools/ci_annotate.py pytest.xml
 
   package:
     needs: test
