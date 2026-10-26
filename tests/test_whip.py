@@ -72,7 +72,7 @@ def test_whip_publish():
     logs = []
     session = StreamSession(server, cfg, "", 48000, 2, logs.append)
     session.start()
-    for _ in range(200):
+    for _ in range(800):  # ICE gathering can take several seconds on CI machines
         if session.state == CONNECTED:
             break
         time.sleep(0.05)
