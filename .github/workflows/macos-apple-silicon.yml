@@ -59,8 +59,11 @@ jobs:
         run: installer/macos/build_dmg.sh && installer/macos/build_pkg.sh
       - name: Upload to the release (first successful runner only)
         if: steps.done.outputs.skip != 'true'
+        timeout-minutes: 130
         run: |
           TAG="${{ steps.version.outputs.tag }}"
+          # the "build" workflow may still be publishing the release: wait for it (up to 2 hours)
+          for i in $(seq 1 240); do gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 && break; sleep 30; done
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -q macos-apple-silicon; then
             echo "another runner already uploaded the Apple Silicon build"; exit 0
           fi
