@@ -1,0 +1,67 @@
+name: macos-apple-silicon
+
+# Native Apple Silicon (arm64) build, added to the release published by the "build" workflow.
+# GitHub's arm64 macOS runners are often short of capacity, so several runner images are tried in parallel:
+# the first one that builds and passes the recording smoke test uploads its files, the others skip the upload.
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+    branches: [main]
+  push:
+    branches: [main]
+    paths: [".github/workflows/macos-apple-silicon.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-14, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Release tag
+        id: version
+        run: echo "tag=v$(python3 -c 'import trip_stream; print(trip_stream.__version__)')" >> "$GITHUB_OUTPUT"
+      - name: Already published?
+        id: done
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' \
+              | grep -q macos-apple-silicon; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.done.outputs.skip != 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - if: steps.done.outputs.skip != 'true'
+        run: pip install -r requirements.txt pyinstaller pillow
+      - if: steps.done.outputs.skip != 'true'
+        run: pyinstaller --noconfirm trip.spec
+      - name: Check native arm64 build
+        if: steps.done.outputs.skip != 'true'
+        run: |
+          file "dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool" | tee /dev/stderr | grep -q arm64
+          echo "::notice title=${{ matrix.os }} $(uname -m) minimum macOS::$(tools/macos_minos.sh "dist/TRIP streaming tool.app")"
+      - name: Recording smoke test (built program)
+        if: steps.done.outputs.skip != 'true'
+        run: python tools/smoke_frozen.py "dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool"
+      - if: steps.done.outputs.skip != 'true'
+        run: installer/macos/build_dmg.sh && installer/macos/build_pkg.sh
+      - name: Upload to the release (first successful runner only)
+        if: steps.done.outputs.skip != 'true'
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -q macos-apple-silicon; then
+            echo "another runner already uploaded the Apple Silicon build"; exit 0
+          fi
+          gh release upload "$TAG" dist/*.dmg dist/*.pkg -R "$GITHUB_REPOSITORY"
+          echo "::notice title=Published::Apple Silicon build uploaded to $TAG by ${{ matrix.os }}"

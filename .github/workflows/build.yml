@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    paths-ignore: [".github/workflows/macos-apple-silicon.yml"]
   pull_request:
   workflow_dispatch:
 
@@ -99,41 +100,3 @@ jobs:
           target_commitish: ${{ github.sha }}
           body_path: RELEASE_NOTES.md
           files: artifacts/**/*
-
-  # Native Apple Silicon (arm64) build. GitHub's arm64 macOS runners are often short of capacity, so this job
-  # runs after the release is published and adds its files to it; if it is not picked up, re-run just this job.
-  package-macos-apple-silicon:
-    needs: release
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt pyinstaller pillow
-      - run: pyinstaller --noconfirm trip.spec
-      - name: Check native arm64 build
-        run: |
-          file "dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool" | tee /dev/stderr | grep -q arm64
-          echo "::notice title=macOS $(uname -m) minimum version::$(tools/macos_minos.sh "dist/TRIP streaming tool.app")"
-      - name: Recording smoke test (built program)
-        run: python tools/smoke_frozen.py "dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool"
-      - run: installer/macos/build_dmg.sh && installer/macos/build_pkg.sh
-      - name: Version
-        id: version
-        run: echo "tag=v$(python3 -c 'import trip_stream; print(trip_stream.__version__)')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v5
-        with:
-          name: trip-streaming-tool-macOS-apple-silicon
-          path: |
-            dist/*.dmg
-            dist/*.pkg
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.version.outputs.tag }}
-          name: TRIP streaming tool ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.version.outputs.tag }}
-          body_path: RELEASE_NOTES.md
-          files: |
-            dist/*.dmg
-            dist/*.pkg
