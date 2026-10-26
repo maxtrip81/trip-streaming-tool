@@ -31,8 +31,10 @@ DEFAULT_SERVER = {
     "enabled": True,
 }
 
+CONFIG_VERSION = 2
+
 DEFAULTS = {
-    "version": 1,
+    "version": CONFIG_VERSION,
     "servers": [],
     "icy": {
         "name": "TRIP streaming tool",
@@ -85,7 +87,7 @@ DEFAULTS = {
     "record": {
         "codec": "wav",
         "bitrate": 192,
-        "folder": str(Path.home()),
+        "folder": "",               # "" = default_record_folder()
         "filename": "rec_%Y-%m-%d_%H-%M-%S",
         "split_minutes": 0,
         "split_sync": False,
@@ -139,6 +141,22 @@ def config_dir() -> Path:
     return base / APP_ID
 
 
+def default_record_folder() -> Path:
+    """Recordings go to a dedicated, easy to find folder inside the user's Music folder."""
+    music = Path.home() / "Music"
+    if sys.platform.startswith("linux"):
+        try:
+            with open(Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "user-dirs.dirs",
+                      encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("XDG_MUSIC_DIR="):
+                        music = Path(line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(Path.home())))
+        except OSError:
+            pass
+    base = music if music.is_dir() else Path.home()
+    return base / "TRIP streaming tool"
+
+
 def default_config_path() -> Path:
     return config_dir() / CONFIG_FILENAME
 
@@ -168,6 +186,11 @@ def load(path: Path | str | None = None) -> dict:
                 cfg = _merge(DEFAULTS, json.load(fh))
         except (OSError, ValueError):
             pass
+    if int(cfg.get("version", 1)) < 2:
+        # 1.0.0 recorded into the bare home folder by default: move to the dedicated recordings folder
+        if cfg["record"]["folder"] == str(Path.home()):
+            cfg["record"]["folder"] = ""
+        cfg["version"] = CONFIG_VERSION
     cfg["servers"] = [normalize_server(s) for s in cfg.get("servers", [])]
     if len(cfg["dsp"]["eq_gains"]) != 10:
         cfg["dsp"]["eq_gains"] = [0.0] * 10

@@ -5,10 +5,11 @@ from __future__ import annotations
 import functools
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import threading
-import wave
+import time
 from pathlib import Path
 
 import numpy as np
@@ -139,6 +140,7 @@ class FFmpegEncoder:
         self._closed = False
         self.bytes_out = 0
         self.data_error = ""
+        self.last_error = ""
         self._reader = None
         if out_file is None:
             self._reader = threading.Thread(target=self._read_loop, daemon=True, name="trip-enc-out")
@@ -167,19 +169,34 @@ class FFmpegEncoder:
         for line in iter(self._proc.stderr.readline, b""):
             text = line.decode("utf-8", "replace").strip()
             if text:
+                self.last_error = text
                 self.on_error(text)
 
     @property
     def alive(self) -> bool:
         return self._proc.poll() is None
 
+    def _exit_reason(self) -> str:
+        code = self._proc.poll()
+        if self._err_reader.is_alive():
+            self._err_reader.join(timeout=1)
+        return self.last_error or f"FFmpeg exited with code {code}"
+
     def write(self, block: np.ndarray) -> None:
         if self._closed:
             return
+        if self._proc.poll() is not None:  # e.g. the output file could not be created
+            raise EncoderError(self._exit_reason())
+        view = memoryview(to_s16(block))
         try:
-            self._proc.stdin.write(to_s16(block))
+            while view:  # unbuffered pipe: the OS may accept only part of the data
+                written = self._proc.stdin.write(view)
+                if written is None:
+                    continue
+                view = view[written:]
         except (BrokenPipeError, OSError, ValueError) as exc:
-            raise EncoderError(f"encoder stopped: {exc}") from exc
+            raise EncoderError(self._exit_reason() if self._proc.poll() is not None
+                               else f"encoder stopped: {exc}") from exc
 
     def close(self, timeout: float = 5.0) -> None:
         """Flush and terminate; all remaining encoded data is delivered before returning."""
@@ -206,19 +223,53 @@ class FFmpegEncoder:
 
 
 class WavWriter:
+    """16-bit PCM WAV writer.
+
+    The header is rewritten every few seconds, so the file stays playable even if the program is closed
+    abruptly; ``full`` tells the recorder to continue in a new file before the 4 GB WAV limit.
+    """
+
+    HEADER_INTERVAL = 2.0
+    MAX_DATA_BYTES = 4_000_000_000
+
     def __init__(self, path: str, samplerate: int, channels: int):
-        self._wav = wave.open(path, "wb")
-        self._wav.setnchannels(channels)
-        self._wav.setsampwidth(2)
-        self._wav.setframerate(samplerate)
+        self.samplerate = samplerate
+        self.channels = channels
         self.warning = ""
+        self.data_bytes = 0
+        self._fh = open(path, "wb")
+        self._write_header()
+        self._fh.flush()
+        self._last_header = time.monotonic()
 
     alive = True
 
+    @property
+    def full(self) -> bool:
+        return self.data_bytes >= self.MAX_DATA_BYTES
+
+    def _write_header(self) -> None:
+        align = self.channels * 2
+        header = (b"RIFF" + struct.pack("<I", 36 + self.data_bytes) + b"WAVE"
+                  + b"fmt " + struct.pack("<IHHIIHH", 16, 1, self.channels, self.samplerate,
+                                          self.samplerate * align, align, 16)
+                  + b"data" + struct.pack("<I", self.data_bytes))
+        end = self._fh.tell()
+        self._fh.seek(0)
+        self._fh.write(header)
+        self._fh.seek(max(end, len(header)))
+
     def write(self, block: np.ndarray) -> None:
-        self._wav.writeframes(to_s16(block))
+        data = to_s16(block)
+        self._fh.write(data)
+        self.data_bytes += len(data)
+        if time.monotonic() - self._last_header >= self.HEADER_INTERVAL:
+            self._write_header()
+            self._fh.flush()
+            self._last_header = time.monotonic()
 
     def close(self, timeout: float = 0) -> None:
-        if self._wav is not None:
-            self._wav.close()
-            self._wav = None
+        if self._fh is not None:
+            self._write_header()
+            self._fh.close()
+            self._fh = None

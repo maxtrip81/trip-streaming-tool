@@ -185,6 +185,8 @@ class Controller:
             if codec != "wav" and not self.ffmpeg:
                 self.log(("msg.no_ffmpeg", {"codec": CODECS[codec]["label"]}))
                 return False
+            if not self.engine.running:
+                self.log(("msg.audio_error", {"err": self.engine.error or "no input"}))
             ok = self.recorder.start(self.cfg, self.engine.samplerate, self.engine.channels, self.ffmpeg)
             if ok:
                 self.engine.add_sink(self.recorder)
@@ -237,6 +239,8 @@ class Controller:
             self.disconnect()
         if self.recorder.error and not self.recorder.active:
             self.engine.remove_sink(self.recorder)
+        if self.recorder.check_growth():
+            self.log(("msg.rec_stalled", {"file": self.recorder.path}))
         if engine.running:
             if stream["start_on_signal"] and not self.is_streaming and \
                     engine.signal_secs >= float(stream["start_signal_secs"]):
@@ -268,7 +272,10 @@ class Controller:
             "connected": self.is_connected,
             "sessions": sessions,
             "recording": rec.active,
-            "record_file": rec.path if rec.active else "",
+            "record_file": rec.path,
+            "record_folder": str(rec.folder_for(self.cfg)),
+            "record_error": "" if rec.active else rec.error,
+            "record_warning": rec.warning if rec.active else "",
             "record_seconds": int(time.time() - rec.started_at) if rec.active else 0,
             "record_bytes": rec.file_size() if rec.active else 0,
             "song": self.songs.current,

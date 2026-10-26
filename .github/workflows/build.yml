@@ -12,15 +12,22 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      QT_QPA_PLATFORM: offscreen
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: sudo apt-get update && sudo apt-get install -y libportaudio2 ffmpeg libegl1 libxkbcommon0
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2 ffmpeg libegl1 libxkbcommon0
       - run: pip install -r requirements.txt pytest
-      - run: QT_QPA_PLATFORM=offscreen pytest -q
+      - run: pytest -q
 
   package:
     needs: test
@@ -38,6 +45,14 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
       - run: pyinstaller --noconfirm trip.spec
+      # the built program must really stream-record to disk on every platform before it is shipped
+      - name: Recording smoke test (built program)
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then EXE=dist/trip-streaming-tool/trip-streaming-tool.exe
+          elif [ "$RUNNER_OS" = "macOS" ]; then EXE="dist/TRIP streaming tool.app/Contents/MacOS/trip-streaming-tool"
+          else EXE=dist/trip-streaming-tool/trip-streaming-tool; fi
+          python tools/smoke_frozen.py "$EXE"
       - name: Windows installer
         if: runner.os == 'Windows'
         run: iscc installer\windows\trip.iss
@@ -56,21 +71,27 @@ jobs:
             dist/*.dmg
             dist/*.pkg
             dist/*.tar.gz
+
+  # Publishes the release (only when every platform passed): for tags v*, and from main for the version in
+  # trip_stream/__init__.py (the tag is created by the release action when it does not exist yet).
+  release:
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
       - name: Version
         id: version
-        shell: bash
-        run: echo "tag=v$(python -c 'import trip_stream; print(trip_stream.__version__)')" >> "$GITHUB_OUTPUT"
-      # Publishes the release for tags v*, and from main for the version in trip_stream/__init__.py
-      # (the tag is created by the release action when it does not exist yet).
-      - if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
+        run: echo "tag=v$(python3 -c 'import trip_stream; print(trip_stream.__version__)')" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+      - run: find artifacts -type f
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.version.outputs.tag }}
           name: TRIP streaming tool ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           body_path: RELEASE_NOTES.md
-          files: |
-            installer/windows/Output/*.exe
-            dist/*.dmg
-            dist/*.pkg
-            dist/*.tar.gz
+          files: artifacts/**/*

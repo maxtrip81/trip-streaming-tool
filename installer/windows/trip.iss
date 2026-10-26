@@ -4,7 +4,7 @@
 ; Build: iscc installer\windows\trip.iss   (after "pyinstaller trip.spec")
 
 #define AppName "TRIP streaming tool"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 #define AppPublisher "Massimiliano Mascioli Trippa (Max Trip)"
 #define AppExe "trip-streaming-tool.exe"
 

@@ -10,6 +10,21 @@ MP3, AAC+, Ogg/Vorbis, Ogg/Opus, Ogg/FLAC; recording (also WAV); primary and sec
 equalizer and compressor; song metadata; signal/silence detection; command-line control.
 Italian and English interface, language chosen at install time and changeable later.
 
+### Novità 1.0.1 / What's new in 1.0.1
+- 🇮🇹 **Registrazione corretta e più sicura:** il file WAV resta valido e riproducibile anche se il programma viene chiuso
+  bruscamente; se FFmpeg non riesce a scrivere il file la registrazione si ferma subito con l'errore sul display
+  (prima il display poteva mostrare "registrazione" senza produrre il file); avviso se il file smette di crescere
+  (permessi della cartella); cambio file automatico prima del limite di 4 GB dei WAV.
+- 🇮🇹 Le registrazioni vanno ora in **Musica/TRIP streaming tool** (prima nella cartella utente) e il nuovo pulsante
+  **📁** apre la cartella; alla fine della registrazione la barra di stato mostra il file salvato.
+- 🇬🇧 **Recording fixed and hardened:** WAV files stay valid even if the program is closed abruptly; if FFmpeg cannot
+  write the file, recording stops immediately with the error on the display (previously the display could show
+  "recording" without producing a file); warning when the file stops growing (folder permissions); automatic new
+  file before the 4 GB WAV limit.
+- 🇬🇧 Recordings now go to **Music/TRIP streaming tool** (previously the home folder) and the new **📁** button opens
+  it; the status bar shows the saved file when recording stops.
+- Windows: `trip-streaming-tool.exe -S` and the other command-line options now print their output in the terminal.
+
 ### Download
 - **Windows**: `TRIP-streaming-tool-*-windows-setup.exe`
 - **macOS**: `TRIP-streaming-tool-*-macos.pkg` (lingua nel programma di installazione / language in the installer) or `.dmg`

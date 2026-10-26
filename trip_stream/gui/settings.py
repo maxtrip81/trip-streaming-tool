@@ -386,6 +386,7 @@ class SettingsDialog(QDialog):
             lambda: self.rec_bitrate.setEnabled(self.rec_codec.currentData() not in ("wav", "flac")))
         self.rec_bitrate.setEnabled(r["codec"] not in ("wav", "flac"))
         self.rec_folder = QLineEdit(r["folder"])
+        self.rec_folder.setPlaceholderText(str(config_mod.default_record_folder()))
         browse = QPushButton(tr("btn.browse"))
         browse.clicked.connect(self._browse_folder)
         self.rec_filename = QLineEdit(r["filename"])
@@ -420,7 +421,8 @@ class SettingsDialog(QDialog):
         return page
 
     def _browse_folder(self):
-        path = QFileDialog.getExistingDirectory(self, tr("record.choose_folder"), self.rec_folder.text())
+        path = QFileDialog.getExistingDirectory(self, tr("record.choose_folder"),
+                                                self.rec_folder.text() or str(config_mod.default_record_folder()))
         if path:
             self.rec_folder.setText(path)
 

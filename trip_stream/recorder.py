@@ -9,7 +9,10 @@ import threading
 import time
 from pathlib import Path
 
+from trip_stream.config import default_record_folder
 from trip_stream.encoders import CODECS, FFmpegEncoder, WavWriter
+
+STALL_SECONDS = 8.0
 
 
 def expand_filename(template: str, index: int, now: _dt.datetime | None = None) -> str:
@@ -52,15 +55,22 @@ class Recorder:
         self._split_now = threading.Event()
         self._next_split = 0.0
         self.error = ""
+        self.warning = ""
+        self._last_size = -1
+        self._last_growth = 0.0
 
     @property
     def active(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
 
+    @staticmethod
+    def folder_for(cfg: dict) -> Path:
+        return Path(os.path.expanduser(cfg["record"]["folder"] or str(default_record_folder())))
+
     def _open_writer(self):
         rec = self.cfg["record"]
         codec = rec["codec"]
-        folder = Path(os.path.expanduser(rec["folder"] or str(Path.home())))
+        folder = self.folder_for(self.cfg)
         folder.mkdir(parents=True, exist_ok=True)
         base = expand_filename(rec["filename"], self.index)
         ext = CODECS[codec]["ext"]
@@ -77,6 +87,9 @@ class Recorder:
                                    on_error=lambda m: self.log(("msg.rec_error", {"err": m})))
         self.path = str(path)
         self.file_started_at = time.time()
+        self._last_size = -1
+        self._last_growth = time.monotonic()
+        self.warning = ""
         self._next_split = next_split_time(self.file_started_at, int(rec["split_minutes"]), bool(rec["split_sync"]))
         self.log(("msg.rec_start", {"file": self.path}))
         return writer
@@ -87,6 +100,7 @@ class Recorder:
         self.cfg, self.samplerate, self.channels, self.ffmpeg = cfg, samplerate, channels, ffmpeg
         self.index = 1
         self.error = ""
+        self.warning = ""
         try:
             self._writer = self._open_writer()
         except Exception as exc:
@@ -116,15 +130,30 @@ class Recorder:
         if not self.active:
             return
         self._stop.set()
-        self._thread.join(timeout=10)
+        self._thread.join(timeout=60)  # the file is finalised by the recording thread
         self._thread = None
-        self.log(("msg.rec_stop", {}))
+        self.log(("msg.rec_stop", {"file": self.path}))
 
     def file_size(self) -> int:
         try:
             return os.path.getsize(self.path) if self.path else 0
         except OSError:
             return 0
+
+    def check_growth(self) -> str:
+        """Return a warning when the file has not grown for a while (writing blocked or impossible)."""
+        if not self.active:
+            return ""
+        size = self.file_size()
+        now = time.monotonic()
+        if size != self._last_size:
+            self._last_size = size
+            self._last_growth = now
+            self.warning = ""
+        elif now - self._last_growth > STALL_SECONDS and not self.warning:
+            self.warning = "stalled"
+            return "stalled"
+        return ""
 
     def _rotate(self):
         self._writer.close()
@@ -142,12 +171,13 @@ class Recorder:
                     self._writer.write(block)
                 elif self._stop.is_set():
                     break
-                if self._split_now.is_set() or (self._next_split and time.time() >= self._next_split):
+                if self._split_now.is_set() or getattr(self._writer, "full", False) or \
+                        (self._next_split and time.time() >= self._next_split):
                     self._split_now.clear()
                     self._rotate()
         except Exception as exc:
-            self.error = str(exc)
-            self.log(("msg.rec_error", {"err": exc}))
+            self.error = str(exc) or exc.__class__.__name__
+            self.log(("msg.rec_error", {"err": self.error}))
         finally:
             if self._writer is not None:
                 try:

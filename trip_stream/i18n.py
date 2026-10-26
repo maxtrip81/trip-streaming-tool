@@ -235,7 +235,16 @@ _STRINGS = {
     "msg.song": ("Song updated: {song}", "Brano aggiornato: {song}"),
     "msg.meta_error": ("[{server}] metadata update failed: {err}", "[{server}] aggiornamento metadati fallito: {err}"),
     "msg.rec_start": ("Recording to {file}", "Registrazione su {file}"),
-    "msg.rec_stop": ("Recording stopped", "Registrazione fermata"),
+    "msg.rec_stop": ("Recording stopped, file saved: {file}", "Registrazione fermata, file salvato: {file}"),
+    "msg.rec_stalled": ("The recording file is not growing: {file}. Check that the folder exists and that "
+                        "TRIP may write there (Windows: Controlled folder access; macOS: Privacy & Security → "
+                        "Files and Folders).",
+                        "Il file di registrazione non cresce: {file}. Controlla che la cartella esista e che TRIP "
+                        "possa scriverci (Windows: Accesso alle cartelle controllato; macOS: Privacy e sicurezza → "
+                        "File e cartelle)."),
+    "lcd.rec_failed": ("REC ERROR", "ERRORE REC"),
+    "lcd.rec_stalled": ("REC: FILE NOT GROWING", "REC: IL FILE NON CRESCE"),
+    "btn.open_folder": ("Open the recordings folder", "Apri la cartella delle registrazioni"),
     "msg.rec_error": ("Recording error: {err}", "Errore di registrazione: {err}"),
     "msg.encoder_error": ("Encoder error: {err}", "Errore encoder: {err}"),
     "msg.signal_start": ("Signal detected: starting {what}", "Segnale rilevato: avvio {what}"),

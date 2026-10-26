@@ -29,7 +29,7 @@ if sys.platform == "darwin":
         bundle_identifier="it.maxtrip.tripstreamingtool",
         info_plist={
             "CFBundleName": "TRIP streaming tool",
-            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleShortVersionString": "1.0.1",
             "CFBundleDevelopmentRegion": "it",
             "CFBundleLocalizations": ["it", "en"],
             "NSMicrophoneUsageDescription":

@@ -46,8 +46,21 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _attach_console() -> None:
+    """The Windows build is a GUI program: attach to the calling terminal so command output is visible."""
+    if sys.platform.startswith("win") and sys.stdout is None:
+        try:
+            import ctypes
+            if ctypes.windll.kernel32.AttachConsole(-1):
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8")
+                sys.stderr = sys.stdout
+        except (OSError, AttributeError):
+            pass
+
+
 def run_client(args, cfg) -> int:
     from trip_stream.remote import send_command
+    _attach_console()
     host = args.address or cfg["advanced"]["remote_host"] or "127.0.0.1"
     port = args.port or int(cfg["advanced"]["remote_port"])
     commands = [c for c, *_ in CLIENT_FLAGS if getattr(args, f"cmd_{c}")]
@@ -69,6 +82,7 @@ def run_client(args, cfg) -> int:
 
 
 def run_headless(controller) -> int:
+    _attach_console()
     stop = {"flag": False}
 
     def handler(*_):
@@ -139,6 +153,7 @@ def main(argv=None) -> int:
     set_language(config_mod.resolve_language(cfg) or config_mod.system_language())
 
     if args.list_devices:
+        _attach_console()
         from trip_stream.audio import devices
         for dev in devices.list_input_devices():
             print(f"{dev['index']:3d}  {dev['label']}  ({dev['channels']} ch, {dev['samplerate']} Hz)")

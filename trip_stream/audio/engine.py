@@ -185,7 +185,7 @@ class AudioEngine:
         except Exception as exc:  # device missing / unsupported format
             self.error = str(exc) or exc.__class__.__name__
             self.log(("msg.audio_error", {"err": self.error}))
-            self._close_streams()
+            self.stop()  # running must be False when no audio can flow
             return False
         name = primary or "default"
         if primary == devices.TONE_DEVICE:

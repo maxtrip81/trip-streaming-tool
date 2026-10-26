@@ -24,7 +24,7 @@ BUTT (Broadcast Using This Tool), with a bilingual Italian/English interface.
 | **Encoder live** | Cattura l'audio in tempo reale e lo invia a una web radio o piattaforma di streaming. |
 | **Server** | Icecast 2 (HTTP PUT o protocollo legacy SOURCE), SHOUTcast v1/v2 (con Stream ID), WebRTC via **WHIP** (Opus 48 kHz, bearer token). SSL/TLS opzionale. **Più server contemporaneamente.** |
 | **Formati** | MP3, AAC+ (HE-AAC v1/v2 con libfdk_aac, AAC-LC altrimenti), Ogg/Vorbis, Ogg/Opus, Ogg/FLAC. Registrazione anche in **WAV**. |
-| **Registrazione** | Registra la diretta sul computer, anche con un codec diverso da quello dello stream. Nome file con data/ora (`%Y %m %d %H %M %S`, `%i` indice), divisione automatica ogni N minuti (anche sincronizzata all'orologio), avvio/arresto automatico con la connessione. |
+| **Registrazione** | Registra la diretta sul computer (cartella predefinita *Musica/TRIP streaming tool*, pulsante 📁 per aprirla), anche con un codec diverso da quello dello stream. I file WAV restano validi anche in caso di chiusura improvvisa. Nome file con data/ora (`%Y %m %d %H %M %S`, `%i` indice), divisione automatica ogni N minuti (anche sincronizzata all'orologio), avvio/arresto automatico con la connessione. |
 | **Dispositivi** | Dispositivo **primario** e **secondario** con scelta dei canali sinistro/destro, **mixer integrato** con volumi indipendenti, mute e master. Mono/stereo, 22,05–96 kHz, buffer regolabile. Tono di prova 440 Hz integrato. |
 | **DSP** | Equalizzatore grafico a 10 bande con preset, compressore (soglia, rapporto, attacco, rilascio, makeup), applicabili a stream e/o registrazione con anteprima dal vivo. |
 | **Metadati** | Titolo del brano manuale, da file di testo (prima o ultima riga), dall'app musicale (Musica/Spotify su macOS, player MPRIS su Linux), prefisso/suffisso, ritardo di aggiornamento. Info stream ICY: nome, descrizione, genere, sito, IRC/ICQ/AIM, pubblico. |
@@ -65,7 +65,7 @@ compilato con `libfdk_aac`, da indicare in *Impostazioni → Avanzate*; senza, s
    mountpoint; SHOUTcast: indirizzo, porta, password, Stream ID; WebRTC: URL WHIP e token).
 2. **Impostazioni → Audio**: scegli il dispositivo di ingresso.
 3. **Impostazioni → Stream**: scegli codec e bitrate. Premi **Salva**.
-4. Premi **▶** per andare in onda, **■** per fermare, **●** per registrare.
+4. Premi **▶** per andare in onda, **■** per fermare, **●** per registrare, **📁** per aprire la cartella delle registrazioni.
 
 Comandi da terminale verso un'istanza aperta:
 
@@ -88,7 +88,7 @@ trip-streaming-tool --headless                 # esecuzione senza interfaccia
 | **Live encoder** | Captures audio in real time and sends it to a web radio or streaming platform. |
 | **Servers** | Icecast 2 (HTTP PUT or legacy SOURCE), SHOUTcast v1/v2 (stream ID), WebRTC via **WHIP** (Opus 48 kHz, bearer token). Optional SSL/TLS. **Several servers at once.** |
 | **Formats** | MP3, AAC+ (HE-AAC v1/v2 with libfdk_aac, AAC-LC otherwise), Ogg/Vorbis, Ogg/Opus, Ogg/FLAC. Recording also to **WAV**. |
-| **Recording** | Records the broadcast locally, optionally with a different codec. Date/time file names (`%Y %m %d %H %M %S`, `%i` index), automatic split every N minutes (optionally clock-synced), start/stop together with the connection. |
+| **Recording** | Records the broadcast locally (default folder *Music/TRIP streaming tool*, 📁 button opens it), optionally with a different codec. WAV files stay valid even after an abrupt shutdown. Date/time file names (`%Y %m %d %H %M %S`, `%i` index), automatic split every N minutes (optionally clock-synced), start/stop together with the connection. |
 | **Devices** | **Primary** and **secondary** device with left/right channel selection, built-in **mixer** with independent volumes, mute and master. Mono/stereo, 22.05–96 kHz, adjustable buffer. Built-in 440 Hz test tone. |
 | **DSP** | 10-band graphic equalizer with presets and a compressor (threshold, ratio, attack, release, makeup), for the stream and/or the recording, with live preview. |
 | **Metadata** | Manual song title, from a text file (first or last line), from the music app (Music/Spotify on macOS, MPRIS players on Linux), prefix/suffix, update delay. ICY stream info: name, description, genre, URL, IRC/ICQ/AIM, public. |

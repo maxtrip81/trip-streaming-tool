@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QTimer
+from pathlib import Path
+
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QApplication, QCheckBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                                QMainWindow, QMessageBox, QPushButton, QSlider, QToolButton, QVBoxLayout, QWidget)
 
@@ -74,10 +77,11 @@ class MainWindow(QMainWindow):
         buttons = QHBoxLayout()
         self.btn_connect = self._transport("▶", tr("btn.connect"), self._connect)
         self.btn_stop = self._transport("■", tr("btn.disconnect"), self.controller.disconnect)
-        self.btn_record = self._transport("●", tr("btn.record"), self.controller.toggle_record, checkable=True)
+        self.btn_record = self._transport("●", tr("btn.record"), self._toggle_record, checkable=True)
         self.btn_record.setObjectName("record")
+        self.btn_folder = self._transport("📁", tr("btn.open_folder"), self.open_record_folder)
         self.btn_connect.setCheckable(True)
-        for b in (self.btn_connect, self.btn_stop, self.btn_record):
+        for b in (self.btn_connect, self.btn_stop, self.btn_record, self.btn_folder):
             buttons.addWidget(b)
         buttons.addStretch()
         self.btn_mixer = QPushButton(tr("btn.mixer"))
@@ -169,6 +173,24 @@ class MainWindow(QMainWindow):
             self.btn_connect.setChecked(False)
             self.statusBar().showMessage(self.controller.logs[-1] if self.controller.logs else "", 8000)
 
+    def _toggle_record(self):
+        c = self.controller
+        was_recording = c.recorder.active
+        c.toggle_record()
+        if was_recording or not c.recorder.active:
+            # show where the file went, or why recording could not start
+            self.statusBar().showMessage(c.logs[-1] if c.logs else "", 15000)
+        else:
+            self.statusBar().showMessage(c.recorder.path, 15000)
+
+    def open_record_folder(self):
+        folder = Path(self.controller.status()["record_folder"])
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+
     def _update_song(self):
         self.controller.update_song(self.song_edit.text().strip())
 
@@ -228,6 +250,11 @@ class MainWindow(QMainWindow):
             rec_codec = CODECS[c.cfg["record"]["codec"]]["label"]
             line3 = f"● {tr('lcd.recording').upper()} {fmt_time(st['record_seconds'])} · {rec_codec} · " \
                     f"{fmt_bytes(st['record_bytes'])}"
+            if st["record_warning"]:
+                line3 = f"⚠ {tr('lcd.rec_stalled')} · {fmt_bytes(st['record_bytes'])}"
+            self.btn_record.setToolTip(st["record_file"])
+        elif st["record_error"]:
+            line3 = f"⚠ {tr('lcd.rec_failed')}: {st['record_error']}"
         else:
             line3 = ""
         line4 = f"♪ {st['song']}" if st["song"] else ""
